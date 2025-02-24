@@ -22,48 +22,48 @@
 
 #include <QObject>
 
-namespace Minimap
-{
-namespace Internal
-{
+#include <utils/store.h>
+
+namespace Minimap {
+namespace Internal {
 class MinimapSettingsPage;
 
 class MinimapSettings : public QObject
 {
-   Q_OBJECT
+    Q_OBJECT
 public:
-   explicit MinimapSettings(QObject* parent);
-   ~MinimapSettings();
+    explicit MinimapSettings(QObject *parent);
+    ~MinimapSettings();
 
-   void toMap(const QString& prefix, QVariantMap* map) const;
-   void fromMap(const QString& prefix, const QVariantMap& map);
+    Utils::Store toMap() const;
+    void fromMap(const Utils::Store &map);
 
-   static MinimapSettings* instance();
+    static MinimapSettings *instance();
 
-   static bool enabled();
-   static int width();
-   static int lineCountThreshold();
-   static int alpha();
+    static bool enabled();
+    static int width();
+    static int lineCountThreshold();
+    static int alpha();
 
 signals:
-   void enabledChanged(bool);
-   void widthChanged(int);
-   void lineCountThresholdChanged(int);
-   void alphaChanged(int);
+    void enabledChanged(bool);
+    void widthChanged(int);
+    void lineCountThresholdChanged(int);
+    void alphaChanged(int);
 
 private:
-   friend class MinimapSettingsPage;
+    friend class MinimapSettingsPageWidget;
 
-   void setEnabled(bool enabled);
-   void setWidth(int width);
-   void setLineCountThreshold(int lineCountThreshold);
-   void setAlpha(int alpha);
+    void setEnabled(bool enabled);
+    void setWidth(int width);
+    void setLineCountThreshold(int lineCountThreshold);
+    void setAlpha(int alpha);
 
-   bool m_enabled;
-   int m_width;
-   int m_lineCountThreshold;
-   int m_alpha;
-   MinimapSettingsPage* m_settingsPage;
+    bool m_enabled;
+    int m_width;
+    int m_lineCountThreshold;
+    int m_alpha;
+    MinimapSettingsPage *m_settingsPage;
 };
-}
-}
+} // namespace Internal
+} // namespace Minimap

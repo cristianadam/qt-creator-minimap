@@ -20,39 +20,34 @@
 
 #pragma once
 
-#include "minimap_global.h"
-
 #include <extensionsystem/iplugin.h>
 
 class QStyle;
 
-namespace Core
-{
+namespace Core {
 class IEditor;
 }
 
-namespace Minimap
-{
-namespace Internal
-{
+namespace Utils {
+class FilePath;
+}
 
-class Minimap : public ExtensionSystem::IPlugin
+namespace Minimap {
+namespace Internal {
+
+class MinimapPlugin : public ExtensionSystem::IPlugin
 {
-   Q_OBJECT
-   Q_PLUGIN_METADATA(IID "org.qt-project.Qt.QtCreatorPlugin" FILE
-                         "Minimap.json")
+    Q_OBJECT
+    Q_PLUGIN_METADATA(IID "org.qt-project.Qt.QtCreatorPlugin" FILE "MinimapPlugin.json")
 
 public:
-   Minimap();
+    MinimapPlugin();
+    ~MinimapPlugin();
 
-   ~Minimap();
-
-   bool initialize(const QStringList& arguments, QString* errorString);
-   void extensionsInitialized();
-   ShutdownFlag aboutToShutdown();
+    bool initialize(const QStringList &arguments, QString *errorString);
 
 private:
-   void editorCreated(Core::IEditor* editor, const QString& fileName);
+    void editorCreated(Core::IEditor *editor, const Utils::FilePath &fileName);
 };
-}
-}
+} // namespace Internal
+} // namespace Minimap
