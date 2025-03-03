@@ -58,11 +58,16 @@ public:
 
     static QObject *createMinimapStyleObject(TextEditor::BaseTextEditor *editor);
 
+    QColor splitterColor() const;
+    void setSplitterColor(const QColor &newSplitterColor);
+
 private:
     bool drawMinimap(const QStyleOptionComplex *,
                      QPainter *,
                      const QWidget *,
                      MinimapStyleObject *) const;
+
+    QColor m_splitterColor;
 };
 } // namespace Internal
 } // namespace Minimap

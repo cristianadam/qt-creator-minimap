@@ -26,6 +26,8 @@
 #include <coreplugin/editormanager/ieditor.h>
 #include <texteditor/texteditor.h>
 
+#include <utils/theme/theme.h>
+
 #include <QApplication>
 
 namespace Minimap {
@@ -48,7 +50,11 @@ bool MinimapPlugin::initialize(const QStringList &arguments, QString *errorMessa
 
     new MinimapSettings(this);
 
-    qApp->setStyle(new MinimapStyle(qApp->style()));
+    auto minimapStyle = new MinimapStyle(qApp->style());
+    qApp->setStyle(minimapStyle);
+
+    if (auto theme = Utils::creatorTheme())
+        minimapStyle->setSplitterColor(theme->color(Utils::Theme::SplitterColor));
 
     Core::EditorManager *em = Core::EditorManager::instance();
     connect(em, &Core::EditorManager::editorCreated, this, &MinimapPlugin::editorCreated);

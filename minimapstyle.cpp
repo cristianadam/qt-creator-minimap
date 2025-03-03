@@ -520,8 +520,25 @@ bool MinimapStyle::drawMinimap(const QStyleOptionComplex *option,
     QRect rect = subControlRect(QStyle::CC_ScrollBar, option, QStyle::SC_ScrollBarSlider, widget)
                      .intersected(option->rect);
     painter->drawRect(rect);
+
+    QPen splitter;
+    splitter.setStyle(Qt::SolidLine);
+    splitter.setColor(splitterColor());
+    painter->setPen(splitter);
+    painter->drawLine(option->rect.topLeft(), option->rect.bottomLeft());
+
     painter->restore();
     return true;
+}
+
+QColor MinimapStyle::splitterColor() const
+{
+    return m_splitterColor;
+}
+
+void MinimapStyle::setSplitterColor(const QColor &splitterColor)
+{
+    m_splitterColor = splitterColor;
 }
 
 QObject *MinimapStyle::createMinimapStyleObject(TextEditor::BaseTextEditor *editor)
