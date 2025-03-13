@@ -4,9 +4,8 @@ on: [push]
 
 env:
   PLUGIN_NAME: MinimapPlugin
-  QT_VERSION: 6.8.1
-  QT_CREATOR_VERSION: 15.0.1
-  QT_CREATOR_VERSION_INTERNAL: 15.0.1
+  QT_VERSION: 6.8.2
+  QT_CREATOR_VERSION: 16.0.0
   MACOS_DEPLOYMENT_TARGET: "11.0"
   CMAKE_VERSION: "3.29.6"
   NINJA_VERSION: "1.12.1"
@@ -215,7 +214,7 @@ jobs:
         endif()
 
     - name: Download Qt Creator
-      uses: qt-creator/install-dev-package@v1.6
+      uses: qt-creator/install-dev-package@v2.1
       with:
         version: ${{ env.QT_CREATOR_VERSION }}
         unzip-to: 'qtcreator'
