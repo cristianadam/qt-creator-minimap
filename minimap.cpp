@@ -50,25 +50,33 @@ bool MinimapPlugin::initialize(const QStringList &arguments, QString *errorMessa
 
     new MinimapSettings(this);
 
-    auto minimapStyle = new MinimapStyle(qApp->style());
-    qApp->setStyle(minimapStyle);
-
-    if (auto theme = Utils::creatorTheme())
-        minimapStyle->setSplitterColor(theme->color(Utils::Theme::SplitterColor));
-
     Core::EditorManager *em = Core::EditorManager::instance();
     connect(em, &Core::EditorManager::editorCreated, this, &MinimapPlugin::editorCreated);
 
     return true;
 }
 
+void MinimapPlugin::setupQStyle()
+{
+    // lazy setup of the style
+    MinimapStyle *style = qobject_cast<MinimapStyle *>(qApp->style());
+    if (!style) {
+        qDebug() << "Creating the minimap style";
+        auto minimapStyle = new MinimapStyle(qApp->style());
+        qApp->setStyle(minimapStyle);
+
+        if (auto theme = Utils::creatorTheme())
+            minimapStyle->setSplitterColor(theme->color(Utils::Theme::SplitterColor));
+    }
+}
+
 void MinimapPlugin::editorCreated(Core::IEditor *editor, const Utils::FilePath &fileName)
 {
     Q_UNUSED(fileName);
-    TextEditor::BaseTextEditor *baseEditor = qobject_cast<TextEditor::BaseTextEditor *>(editor);
-    if (baseEditor) {
+
+    setupQStyle();
+    if (auto baseEditor = qobject_cast<TextEditor::BaseTextEditor *>(editor))
         MinimapStyle::createMinimapStyleObject(baseEditor);
-    }
 }
 } // namespace Internal
 } // namespace Minimap

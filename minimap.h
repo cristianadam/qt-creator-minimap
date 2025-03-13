@@ -45,6 +45,7 @@ public:
     ~MinimapPlugin();
 
     bool initialize(const QStringList &arguments, QString *errorString);
+    void setupQStyle();
 
 private:
     void editorCreated(Core::IEditor *editor, const Utils::FilePath &fileName);
