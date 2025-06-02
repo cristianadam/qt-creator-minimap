@@ -17,7 +17,6 @@ jobs:
     outputs:
         tag: ${{ steps.git.outputs.tag }}
     strategy:
-      fail-fast: false
       matrix:
         config:
         - {
@@ -26,6 +25,13 @@ jobs:
             platform: windows_x64,
             cc: "cl", cxx: "cl",
             environment_script: "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Auxiliary/Build/vcvars64.bat",
+          }
+        - {
+            name: "Windows Latest MSVC Arm64", artifact: "Windows-arm64",
+            os: windows-latest,
+            platform: windows_arm64,
+            cc: "cl", cxx: "cl",
+            environment_script: "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Auxiliary/Build/vcvarsamd64_arm64.bat",
           }
         - {
             name: "Ubuntu Latest GCC", artifact: "Linux-x64",
@@ -328,16 +334,16 @@ jobs:
         draft: false
         prerelease: false
 
-    # - name: Release on Extension Store
-    #   uses: qt-creator/deploy-qtc-plugin@v0.3
-    #   with:
-    #     api: ${{ secrets.EXTENSION_STORE_API_URL }}
-    #     token: ${{ secrets.EXTENSION_STORE_API_TOKEN }}
-    #     publish: true
-    #     spec: release/${{ env.PLUGIN_NAME }}.json
-    #     download-url-linux-arm64: ${{ fromJSON(steps.create_release.outputs.assets)[0].browser_download_url }}
-    #     download-url-linux-x64: ${{ fromJSON(steps.create_release.outputs.assets)[1].browser_download_url }}
-    #     download-url-macos-arm64: ${{ fromJSON(steps.create_release.outputs.assets)[2].browser_download_url }}
-    #     download-url-macos-x64: ${{ fromJSON(steps.create_release.outputs.assets)[2].browser_download_url }}
-    #     download-url-win-arm64: ${{ fromJSON(steps.create_release.outputs.assets)[3].browser_download_url }}
-    #     download-url-win-x64: ${{ fromJSON(steps.create_release.outputs.assets)[4].browser_download_url }}
+    - name: Release on Extension Store
+      uses: qt-creator/deploy-qtc-plugin@v0.3
+      with:
+        api: ${{ secrets.EXTENSION_STORE_API_URL }}
+        token: ${{ secrets.EXTENSION_STORE_API_TOKEN }}
+        publish: true
+        spec: release/${{ env.PLUGIN_NAME }}.json
+        download-url-linux-arm64: ${{ fromJSON(steps.create_release.outputs.assets)[0].browser_download_url }}
+        download-url-linux-x64: ${{ fromJSON(steps.create_release.outputs.assets)[1].browser_download_url }}
+        download-url-macos-arm64: ${{ fromJSON(steps.create_release.outputs.assets)[2].browser_download_url }}
+        download-url-macos-x64: ${{ fromJSON(steps.create_release.outputs.assets)[2].browser_download_url }}
+        download-url-win-arm64: ${{ fromJSON(steps.create_release.outputs.assets)[3].browser_download_url }}
+        download-url-win-x64: ${{ fromJSON(steps.create_release.outputs.assets)[4].browser_download_url }}
