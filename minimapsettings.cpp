@@ -48,6 +48,8 @@ const char enabledKey[] = "Enabled";
 const char widthKey[] = "Width";
 const char lineCountThresholdKey[] = "LineCountThresHold";
 const char alphaKey[] = "Alpha";
+const char centerOnClickKey[] = "CenterOnClick";
+const char showLineTooltipKey[] = "ShowLineTooltip";
 
 MinimapSettings *m_instance = 0;
 } // namespace
@@ -91,6 +93,14 @@ public:
         m_alpha->setToolTip(Tr::tr("The alpha value of the scrollbar slider"));
         m_alpha->setValue(m_instance->m_alpha);
         form->addRow(Tr::tr("Scrollbar slider alpha value:"), m_alpha);
+        m_centerOnClick = new QCheckBox(groupBox);
+        m_centerOnClick->setToolTip(Tr::tr("Center viewport on mouse position when clicking and dragging"));
+        m_centerOnClick->setChecked(m_instance->m_centerOnClick);
+        form->addRow(Tr::tr("Center on click:"), m_centerOnClick);
+        m_showLineTooltip = new QCheckBox(groupBox);
+        m_showLineTooltip->setToolTip(Tr::tr("Show line range tooltip when interacting with minimap"));
+        m_showLineTooltip->setChecked(m_instance->m_showLineTooltip);
+        form->addRow(Tr::tr("Show line tooltip:"), m_showLineTooltip);
         groupBox->setLayout(form);
         setLayout(layout);
         setEnabled(!m_textWrapping);
@@ -117,6 +127,14 @@ public:
             m_instance->setAlpha(m_alpha->value());
             save = true;
         }
+        if (m_centerOnClick->isChecked() != MinimapSettings::centerOnClick()) {
+            m_instance->setCenterOnClick(m_centerOnClick->isChecked());
+            save = true;
+        }
+        if (m_showLineTooltip->isChecked() != MinimapSettings::showLineTooltip()) {
+            m_instance->setShowLineTooltip(m_showLineTooltip->isChecked());
+            save = true;
+        }
         if (save) {
             Utils::storeToSettings(Utils::keyFromString(minimapPostFix),
                                    Core::ICore::settings(),
@@ -137,6 +155,8 @@ private:
     QSpinBox *m_width;
     QSpinBox *m_lineCountThresHold;
     QSpinBox *m_alpha;
+    QCheckBox *m_centerOnClick;
+    QCheckBox *m_showLineTooltip;
     bool m_textWrapping;
 };
 
@@ -158,6 +178,8 @@ MinimapSettings::MinimapSettings(QObject *parent)
     , m_width(Constants::MINIMAP_WIDTH_DEFAULT)
     , m_lineCountThreshold(Constants::MINIMAP_MAX_LINE_COUNT_DEFAULT)
     , m_alpha(Constants::MINIMAP_ALPHA_DEFAULT)
+    , m_centerOnClick(Constants::MINIMAP_CENTER_ON_CLICK_DEFAULT)
+    , m_showLineTooltip(Constants::MINIMAP_SHOW_LINE_TOOLTIP_DEFAULT)
 {
     QTC_ASSERT(!m_instance, return);
     m_instance = this;
@@ -182,6 +204,8 @@ Utils::Store MinimapSettings::toMap() const
     map.insert(widthKey, m_width);
     map.insert(lineCountThresholdKey, m_lineCountThreshold);
     map.insert(alphaKey, m_alpha);
+    map.insert(centerOnClickKey, m_centerOnClick);
+    map.insert(showLineTooltipKey, m_showLineTooltip);
     return map;
 }
 
@@ -191,6 +215,8 @@ void MinimapSettings::fromMap(const Utils::Store &map)
     m_width = map.value(widthKey, m_width).toInt();
     m_lineCountThreshold = map.value(lineCountThresholdKey, m_lineCountThreshold).toInt();
     m_alpha = map.value(alphaKey, m_alpha).toInt();
+    m_centerOnClick = map.value(centerOnClickKey, m_centerOnClick).toBool();
+    m_showLineTooltip = map.value(showLineTooltipKey, m_showLineTooltip).toBool();
 }
 
 bool MinimapSettings::enabled()
@@ -211,6 +237,16 @@ int MinimapSettings::lineCountThreshold()
 int MinimapSettings::alpha()
 {
     return m_instance->m_alpha;
+}
+
+bool MinimapSettings::centerOnClick()
+{
+    return m_instance->m_centerOnClick;
+}
+
+bool MinimapSettings::showLineTooltip()
+{
+    return m_instance->m_showLineTooltip;
 }
 
 void MinimapSettings::setEnabled(bool enabled)
@@ -242,6 +278,22 @@ void MinimapSettings::setAlpha(int alpha)
     if (m_alpha != alpha) {
         m_alpha = alpha;
         emit alphaChanged(alpha);
+    }
+}
+
+void MinimapSettings::setCenterOnClick(bool centerOnClick)
+{
+    if (m_centerOnClick != centerOnClick) {
+        m_centerOnClick = centerOnClick;
+        emit centerOnClickChanged(centerOnClick);
+    }
+}
+
+void MinimapSettings::setShowLineTooltip(bool showLineTooltip)
+{
+    if (m_showLineTooltip != showLineTooltip) {
+        m_showLineTooltip = showLineTooltip;
+        emit showLineTooltipChanged(showLineTooltip);
     }
 }
 } // namespace Internal

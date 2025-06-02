@@ -33,5 +33,7 @@ const int MINIMAP_WIDTH_DEFAULT = 80;
 const int MINIMAP_EXTRA_AREA_WIDTH = 7;
 const int MINIMAP_MAX_LINE_COUNT_DEFAULT = 8000;
 const int MINIMAP_ALPHA_DEFAULT = 32;
+const bool MINIMAP_CENTER_ON_CLICK_DEFAULT = true;
+const bool MINIMAP_SHOW_LINE_TOOLTIP_DEFAULT = true;
 } // namespace Constants
 } // namespace Minimap

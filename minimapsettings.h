@@ -44,12 +44,16 @@ public:
     static int width();
     static int lineCountThreshold();
     static int alpha();
+    static bool centerOnClick();
+    static bool showLineTooltip();
 
 signals:
     void enabledChanged(bool);
     void widthChanged(int);
     void lineCountThresholdChanged(int);
     void alphaChanged(int);
+    void centerOnClickChanged(bool);
+    void showLineTooltipChanged(bool);
 
 private:
     friend class MinimapSettingsPageWidget;
@@ -58,11 +62,15 @@ private:
     void setWidth(int width);
     void setLineCountThreshold(int lineCountThreshold);
     void setAlpha(int alpha);
+    void setCenterOnClick(bool centerOnClick);
+    void setShowLineTooltip(bool showLineTooltip);
 
     bool m_enabled;
     int m_width;
     int m_lineCountThreshold;
     int m_alpha;
+    bool m_centerOnClick;
+    bool m_showLineTooltip;
     MinimapSettingsPage *m_settingsPage;
 };
 } // namespace Internal

@@ -32,12 +32,14 @@
 #include <utils/theme/theme.h>
 
 #include <QDebug>
+#include <QMouseEvent>
 #include <QPainter>
 #include <QScrollBar>
 #include <QStyleOption>
 #include <QTextBlock>
 #include <QTextDocument>
 #include <QTimer>
+#include <QToolTip>
 
 #include <algorithm>
 
@@ -109,6 +111,7 @@ public:
         , m_theme(Utils::creatorTheme())
         , m_editor(editor->editorWidget())
         , m_update(false)
+        , m_isDragging(false)
     {
         m_editor->installEventFilter(this);
         if (!m_editor->textDocument()->document()->isEmpty()) {
@@ -127,7 +130,66 @@ public:
     {
         if (watched == m_editor && event->type() == QEvent::Resize) {
             deferedUpdate();
+            return false;
         }
+        
+        // Handle mouse events on the scrollbar for center-on-click behavior and tooltip
+        if (watched == m_editor->verticalScrollBar()) {
+            if (event->type() == QEvent::MouseButtonPress) {
+                QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
+                if (mouseEvent->button() == Qt::LeftButton) {
+                    bool centerOnClick = MinimapSettings::centerOnClick();
+                    bool showTooltip = MinimapSettings::showLineTooltip();
+                    
+                    if (centerOnClick) {
+                        m_isDragging = true;
+                        m_lastMousePos = mouseEvent->pos();
+                        centerViewportOnMousePosition(mouseEvent->pos());
+                        m_editor->verticalScrollBar()->setMouseTracking(true);
+                    }
+                    
+                    if (showTooltip) {
+                        showLineRangeTooltip(mouseEvent->globalPos());
+                    }
+                    
+                    return centerOnClick; // Only consume event if center-on-click is enabled
+                }
+            } else if (event->type() == QEvent::MouseButtonRelease) {
+                QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
+                if (mouseEvent->button() == Qt::LeftButton) {
+                    bool wasHandled = false;
+                    
+                    if (m_isDragging && MinimapSettings::centerOnClick()) {
+                        m_isDragging = false;
+                        m_editor->verticalScrollBar()->setMouseTracking(false);
+                        wasHandled = true;
+                    }
+                    
+                    if (MinimapSettings::showLineTooltip()) {
+                        QToolTip::hideText();
+                    }
+                    
+                    return wasHandled;
+                }
+            } else if (event->type() == QEvent::MouseMove) {
+                QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
+                bool wasHandled = false;
+                
+                if (m_isDragging && MinimapSettings::centerOnClick()) {
+                    m_lastMousePos = mouseEvent->pos();
+                    centerViewportOnMousePosition(mouseEvent->pos());
+                    wasHandled = true;
+                }
+                
+                if (MinimapSettings::showLineTooltip() && 
+                    (m_isDragging || mouseEvent->buttons() & Qt::LeftButton)) {
+                    showLineRangeTooltip(mouseEvent->globalPos());
+                }
+                
+                return wasHandled;
+            }
+        }
+        
         return false;
     }
 
@@ -164,6 +226,9 @@ private:
         QScrollBar *scrollbar = m_editor->verticalScrollBar();
         scrollbar->setProperty(Constants::MINIMAP_STYLE_OBJECT_PROPERTY,
                                QVariant::fromValue<QObject *>(this));
+        
+        scrollbar->installEventFilter(this);
+        
         connect(m_editor->textDocument(),
                 &TextEditor::TextDocument::fontSettingsChanged,
                 this,
@@ -192,11 +257,135 @@ private:
                 &MinimapSettings::alphaChanged,
                 this,
                 &MinimapStyleObject::fontSettingsChanged);
+        connect(MinimapSettings::instance(),
+                &MinimapSettings::centerOnClickChanged,
+                this,
+                &MinimapStyleObject::centerOnClickChanged);
+        connect(MinimapSettings::instance(),
+                &MinimapSettings::showLineTooltipChanged,
+                this,
+                &MinimapStyleObject::showLineTooltipChanged);
         connect(scrollbar,
                 &QAbstractSlider::valueChanged,
                 this,
                 &MinimapStyleObject::updateSubControlRects);
         fontSettingsChanged();
+    }
+
+    void centerViewportOnMousePosition(const QPoint &mousePos)
+    {
+        QScrollBar *scrollbar = m_editor->verticalScrollBar();
+        
+        int mouseY = mousePos.y();
+        int minimapHeight = scrollbar->height();
+        
+        // Calculate the actual height that contains code content in the minimap
+        // This matches the logic used in drawMinimap()
+        qreal factor = m_factor;
+        int actualContentHeight;
+        
+        if (factor < 1.0) {
+            // When zoomed out, content is scaled to fit
+            actualContentHeight = qRound(m_lineCount * factor);
+        } else {
+            // When 1:1 or zoomed in, each line takes 1 pixel
+            actualContentHeight = qMin(m_lineCount, minimapHeight);
+        }
+        
+        int targetLine;
+        
+        // Check if mouse is within the actual code area
+        if (mouseY <= actualContentHeight) {
+            // Mouse is within code area - calculate proportionally
+            qreal lineRatio = static_cast<qreal>(mouseY) / actualContentHeight;
+            targetLine = qMax(1, qRound(lineRatio * m_lineCount));
+        } else {
+            // Mouse is in empty area below code - go to end of document
+            targetLine = m_lineCount;
+        }
+        
+        // Calculate the viewport height in lines
+        int viewportHeight = m_editor->viewport()->height();
+        int lineHeight = m_editor->fontMetrics().lineSpacing();
+        int linesPerPage = viewportHeight / lineHeight;
+        
+        // Center the viewport on the target line
+        int centerLine = targetLine - (linesPerPage / 2);
+        centerLine = qMax(1, qMin(centerLine, qMax(1, m_lineCount - linesPerPage + 1)));
+        
+        // Convert back to scroll value (0-based for scroll position)
+        int maxScrollValue = scrollbar->maximum();
+        if (maxScrollValue > 0) {
+            int maxCenterLine = qMax(1, m_lineCount - linesPerPage + 1);
+            if (maxCenterLine > 1) {
+                qreal scrollRatio = static_cast<qreal>(centerLine - 1) / (maxCenterLine - 1);
+                int targetScrollValue = qRound(scrollRatio * maxScrollValue);
+                targetScrollValue = qMax(0, qMin(targetScrollValue, maxScrollValue));
+                scrollbar->setValue(targetScrollValue);
+            } else {
+                scrollbar->setValue(0);
+            }
+        }
+    }
+
+    void centerOnClickChanged()
+    {
+        QScrollBar *scrollbar = m_editor->verticalScrollBar();
+        // Always keep event filter installed since we need it for tooltips too
+        scrollbar->installEventFilter(this);
+        
+        if (!MinimapSettings::centerOnClick()) {
+            m_isDragging = false;
+            scrollbar->setMouseTracking(false);
+            // Only hide tooltip if tooltip setting is also disabled
+            if (!MinimapSettings::showLineTooltip()) {
+                QToolTip::hideText();
+            }
+        }
+    }
+
+    void showLineTooltipChanged()
+    {
+        if (!MinimapSettings::showLineTooltip()) {
+            QToolTip::hideText();
+        }
+    }
+
+    void showLineRangeTooltip(const QPoint &globalPos)
+    {
+        QPair<int, int> visibleRange = getVisibleLineRange();
+        int s = visibleRange.first;
+        int e = visibleRange.second;
+        
+        QString tooltipText = QString("<center>%1<br>—<br>%2</center>").arg(s).arg(e);
+        QToolTip::showText(globalPos, tooltipText, m_editor->verticalScrollBar());
+    }
+
+    QPair<int, int> getVisibleLineRange() const
+    {
+        QScrollBar *scrollbar = m_editor->verticalScrollBar();
+        
+        // Calculate lines per page based on viewport height
+        int viewportHeight = m_editor->viewport()->height();
+        int lineHeight = m_editor->fontMetrics().lineSpacing();
+        int linesPerPage = viewportHeight / lineHeight;
+        
+        // Get current scroll position
+        int scrollValue = scrollbar->value();
+        int maxScrollValue = scrollbar->maximum();
+        
+        // Calculate first visible line (1-based for user display)
+        int firstVisibleLine = 1;
+        if (maxScrollValue > 0) {
+            qreal scrollRatio = static_cast<qreal>(scrollValue) / maxScrollValue;
+            int maxStartLine = qMax(1, m_lineCount - linesPerPage + 1);
+            firstVisibleLine = qRound(scrollRatio * (maxStartLine - 1)) + 1;
+        }
+        
+        // Calculate last visible line
+        int lastVisibleLine = qMin(firstVisibleLine + linesPerPage - 1, m_lineCount);
+        
+        return QPair<int, int>(firstVisibleLine, lastVisibleLine);
     }
 
     void contentsChanged()
@@ -279,6 +468,8 @@ private:
     QRect m_groove, m_addPage, m_subPage, m_slider;
     QColor m_backgroundColor, m_foregroundColor, m_overlayColor;
     bool m_update;
+    bool m_isDragging;
+    QPoint m_lastMousePos;
 };
 
 MinimapStyle::MinimapStyle(QStyle *style)
@@ -316,6 +507,11 @@ QStyle::SubControl MinimapStyle::hitTestComplexControl(ComplexControl control,
             MinimapStyleObject *o = static_cast<MinimapStyleObject *>(v.value<QObject *>());
             int lineCount = o->lineCount();
             if (lineCount > 0 && lineCount <= MinimapSettings::lineCountThreshold()) {
+                // If center-on-click is enabled, we handle mouse events differently
+                if (MinimapSettings::centerOnClick()) {
+                    return SC_ScrollBarGroove;
+                }
+                
                 SubControl sc = SC_None;
                 if (const QStyleOptionSlider *scrollbar
                     = qstyleoption_cast<const QStyleOptionSlider *>(option)) {
