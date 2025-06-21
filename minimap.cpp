@@ -43,17 +43,12 @@ MinimapPlugin::~MinimapPlugin()
     }
 }
 
-bool MinimapPlugin::initialize(const QStringList &arguments, QString *errorMessage)
+void MinimapPlugin::initialize()
 {
-    Q_UNUSED(arguments)
-    Q_UNUSED(errorMessage)
-
     new MinimapSettings(this);
 
     Core::EditorManager *em = Core::EditorManager::instance();
     connect(em, &Core::EditorManager::editorCreated, this, &MinimapPlugin::editorCreated);
-
-    return true;
 }
 
 void MinimapPlugin::setupQStyle()

@@ -44,7 +44,7 @@ public:
     MinimapPlugin();
     ~MinimapPlugin();
 
-    bool initialize(const QStringList &arguments, QString *errorString);
+    void initialize();
     void setupQStyle();
 
 private:
