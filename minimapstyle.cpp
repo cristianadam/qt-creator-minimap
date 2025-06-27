@@ -429,8 +429,10 @@ private:
     void update()
     {
         QScrollBar *scrollbar = m_editor->verticalScrollBar();
-        QSizeF sz = m_editor->document()->size();
-        m_lineCount = sz.toSize().height() + 1;
+
+        // Fix for Qt Creator 17.0.0: Use blockCount
+        m_lineCount = qMax(m_editor->document()->blockCount(), 1);
+
         int w = scrollbar->width();
         int h = scrollbar->height();
         m_factor = m_lineCount <= h ? 1.0 : h / static_cast<qreal>(m_lineCount);
@@ -444,20 +446,51 @@ private:
     void updateSubControlRects()
     {
         QScrollBar *scrollbar = m_editor->verticalScrollBar();
-        int viewPortLineCount = qRound(m_factor * (m_lineCount - scrollbar->maximum()));
+
+        int viewportHeight = m_editor->viewport()->height();
+        int lineHeight = m_editor->fontMetrics().lineSpacing();
+        int actualLinesPerPage = qMax(1, viewportHeight / lineHeight);
+
+        int viewPortLineCount = qRound(m_factor * actualLinesPerPage);
+        viewPortLineCount = qMax(1, qMin(viewPortLineCount, m_groove.height()));
+
         int w = scrollbar->width();
         int h = scrollbar->height();
         int value = scrollbar->value();
-        int realValue = qRound(m_factor * value);
         int min = scrollbar->minimum();
         int max = scrollbar->maximum();
-        m_addPage = value < max ? QRect(0,
-                                        realValue + viewPortLineCount,
-                                        w,
-                                        h - viewPortLineCount - realValue)
-                                : QRect();
-        m_subPage = value > min ? QRect(0, 0, w, realValue) : QRect();
+
+        int actualContentHeight;
+        if (m_factor < 1.0) {
+            // When zoomed out, content is scaled to fit
+            actualContentHeight = qRound(m_lineCount * m_factor);
+        } else {
+            // When 1:1 or zoomed in, each line takes 1 pixel
+            actualContentHeight = qMin(m_lineCount, h);
+        }
+        actualContentHeight = qMax(1, actualContentHeight);
+
+        int realValue = 0;
+        if (max > min && actualContentHeight > viewPortLineCount) {
+            qreal scrollRatio = static_cast<qreal>(value - min) / (max - min);
+            int maxSliderTop = actualContentHeight - viewPortLineCount;
+            realValue = qRound(scrollRatio * maxSliderTop);
+            realValue = qMax(0, qMin(realValue, maxSliderTop));
+        }
+
+        if (realValue + viewPortLineCount > actualContentHeight) {
+            realValue = actualContentHeight - viewPortLineCount;
+        }
+        realValue = qMax(0, realValue);
+
+        m_addPage = (realValue + viewPortLineCount < h) ?
+        QRect(0, realValue + viewPortLineCount, w, h - realValue - viewPortLineCount) :
+        QRect();
+        m_subPage = (realValue > 0) ?
+        QRect(0, 0, w, realValue) :
+        QRect();
         m_slider = QRect(0, realValue, w, viewPortLineCount);
+
         scrollbar->update();
     }
 
