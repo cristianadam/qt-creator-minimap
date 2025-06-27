@@ -19,8 +19,6 @@
 */
 
 #include "minimapstyle.h"
-#include "minimapconstants.h"
-#include "minimapsettings.h"
 
 #include <texteditor/displaysettings.h>
 #include <texteditor/fontsettings.h>
@@ -31,6 +29,7 @@
 #include <texteditor/texteditorsettings.h>
 #include <utils/theme/theme.h>
 
+#include <algorithm>
 #include <QDebug>
 #include <QMouseEvent>
 #include <QPainter>
@@ -41,7 +40,8 @@
 #include <QTimer>
 #include <QToolTip>
 
-#include <algorithm>
+#include "minimapconstants.h"
+#include "minimapsettings.h"
 
 namespace Minimap {
 namespace Internal {
@@ -133,7 +133,6 @@ public:
             return false;
         }
 
-        // Handle mouse events on the scrollbar for center-on-click behavior and tooltip
         if (watched == m_editor->verticalScrollBar()) {
             if (event->type() == QEvent::MouseButtonPress) {
                 QMouseEvent *mouseEvent = static_cast<QMouseEvent *>(event);
@@ -149,10 +148,10 @@ public:
                     }
 
                     if (showTooltip) {
-                        showLineRangeTooltip(mouseEvent->globalPos());
+                        showLineRangeTooltip(mouseEvent->globalPosition().toPoint());
                     }
 
-                    return centerOnClick; // Only consume event if center-on-click is enabled
+                    return centerOnClick;
                 }
             } else if (event->type() == QEvent::MouseButtonRelease) {
                 QMouseEvent *mouseEvent = static_cast<QMouseEvent *>(event);
@@ -183,7 +182,7 @@ public:
 
                 if (MinimapSettings::showLineTooltip() &&
                     (m_isDragging || mouseEvent->buttons() & Qt::LeftButton)) {
-                    showLineRangeTooltip(mouseEvent->globalPos());
+                    showLineRangeTooltip(mouseEvent->globalPosition().toPoint());
                 }
 
                 return wasHandled;
@@ -363,27 +362,19 @@ private:
 
     QPair<int, int> getVisibleLineRange() const
     {
-        QScrollBar *scrollbar = m_editor->verticalScrollBar();
+        QRect viewport = m_editor->viewport()->rect();
 
-        // Calculate lines per page based on viewport height
-        int viewportHeight = m_editor->viewport()->height();
-        int lineHeight = m_editor->fontMetrics().lineSpacing();
-        int linesPerPage = viewportHeight / lineHeight;
+        QTextCursor topCursor = m_editor->cursorForPosition(QPoint(0, 0));
 
-        // Get current scroll position
-        int scrollValue = scrollbar->value();
-        int maxScrollValue = scrollbar->maximum();
+        QTextCursor bottomCursor = m_editor->cursorForPosition(QPoint(0, viewport.height() - 1));
 
-        // Calculate first visible line (1-based for user display)
-        int firstVisibleLine = 1;
-        if (maxScrollValue > 0) {
-            qreal scrollRatio = static_cast<qreal>(scrollValue) / maxScrollValue;
-            int maxStartLine = qMax(1, m_lineCount - linesPerPage + 1);
-            firstVisibleLine = qRound(scrollRatio * (maxStartLine - 1)) + 1;
-        }
+        // Convert to line numbers (1-based for user display)
+        int firstVisibleLine = topCursor.blockNumber() + 1;
+        int lastVisibleLine = bottomCursor.blockNumber() + 1;
 
-        // Calculate last visible line
-        int lastVisibleLine = qMin(firstVisibleLine + linesPerPage - 1, m_lineCount);
+        firstVisibleLine = qMax(1, firstVisibleLine);
+        lastVisibleLine = qMax(firstVisibleLine, lastVisibleLine);
+        lastVisibleLine = qMin(lastVisibleLine, m_lineCount);
 
         return QPair<int, int>(firstVisibleLine, lastVisibleLine);
     }
