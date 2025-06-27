@@ -438,6 +438,13 @@ private:
     {
         QScrollBar *scrollbar = m_editor->verticalScrollBar();
 
+        if (m_lineCount <= 0) {
+            m_addPage = QRect();
+            m_subPage = QRect();
+            m_slider = QRect();
+            return;
+        }
+
         int viewportHeight = m_editor->viewport()->height();
         int lineHeight = m_editor->fontMetrics().lineSpacing();
         int actualLinesPerPage = qMax(1, viewportHeight / lineHeight);
@@ -453,13 +460,13 @@ private:
 
         int actualContentHeight;
         if (m_factor < 1.0) {
-            // When zoomed out, content is scaled to fit
-            actualContentHeight = qRound(m_lineCount * m_factor);
+            // When zoomed out: content is scaled, use the last drawn line position
+            actualContentHeight = qRound((m_lineCount - 1) * m_factor) + 1;
         } else {
-            // When 1:1 or zoomed in, each line takes 1 pixel
-            actualContentHeight = qMin(m_lineCount, h);
+            // When 1:1 or zoomed in: each line takes 1 pixel
+            actualContentHeight = m_lineCount;
         }
-        actualContentHeight = qMax(1, actualContentHeight);
+        actualContentHeight = qMin(actualContentHeight, h);
 
         int realValue = 0;
         if (max > min && actualContentHeight > viewPortLineCount) {
