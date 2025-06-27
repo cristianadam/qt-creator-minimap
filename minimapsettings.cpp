@@ -24,8 +24,8 @@
 
 #include <coreplugin/icore.h>
 #include <extensionsystem/pluginmanager.h>
-#include <texteditor/texteditorconstants.h>
 #include <texteditor/displaysettings.h>
+#include <texteditor/texteditorconstants.h>
 #include <texteditor/texteditorsettings.h>
 #include <utils/qtcassert.h>
 #include <utils/store.h>
@@ -94,11 +94,13 @@ public:
         m_alpha->setValue(m_instance->m_alpha);
         form->addRow(Tr::tr("Scrollbar slider alpha value:"), m_alpha);
         m_centerOnClick = new QCheckBox(groupBox);
-        m_centerOnClick->setToolTip(Tr::tr("Center viewport on mouse position when clicking and dragging"));
+        m_centerOnClick->setToolTip(
+            Tr::tr("Center viewport on mouse position when clicking and dragging"));
         m_centerOnClick->setChecked(m_instance->m_centerOnClick);
         form->addRow(Tr::tr("Center on click:"), m_centerOnClick);
         m_showLineTooltip = new QCheckBox(groupBox);
-        m_showLineTooltip->setToolTip(Tr::tr("Show line range tooltip when interacting with minimap"));
+        m_showLineTooltip->setToolTip(
+            Tr::tr("Show line range tooltip when interacting with minimap"));
         m_showLineTooltip->setChecked(m_instance->m_showLineTooltip);
         form->addRow(Tr::tr("Show line tooltip:"), m_showLineTooltip);
         groupBox->setLayout(form);
