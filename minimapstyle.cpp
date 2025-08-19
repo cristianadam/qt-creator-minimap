@@ -631,6 +631,9 @@ bool MinimapStyle::drawMinimap(const QStyleOptionComplex *option,
     QColor baseBg = o->background();
     QColor baseFg = o->foreground();
     int w = o->width() - Constants::MINIMAP_EXTRA_AREA_WIDTH;
+    if (w <= 0 || h <= 0) {
+        return false;
+    }
     QImage image(o->width(), h, QImage::Format_RGB32);
     image.fill(baseBg);
     QTextDocument *doc = o->editor()->document();
