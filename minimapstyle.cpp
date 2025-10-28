@@ -268,6 +268,11 @@ private:
                 &QAbstractSlider::valueChanged,
                 this,
                 &MinimapStyleObject::updateSubControlRects);
+        connect(MinimapSettings::instance(),
+                &MinimapSettings::pixelsPerLineChanged,
+                this,
+                &MinimapStyleObject::deferedUpdate);
+
         fontSettingsChanged();
     }
 
@@ -421,8 +426,8 @@ private:
     {
         QScrollBar *scrollbar = m_editor->verticalScrollBar();
 
-        // Fix for Qt Creator 17.0.0: Use blockCount
-        m_lineCount = qMax(m_editor->document()->blockCount(), 1);
+        m_lineCount = qMax(m_editor->document()->blockCount(), 1)
+                      * MinimapSettings::instance()->pixelsPerLine();
 
         int w = scrollbar->width();
         int h = scrollbar->height();
@@ -447,7 +452,8 @@ private:
 
         int viewportHeight = m_editor->viewport()->height();
         int lineHeight = m_editor->fontMetrics().lineSpacing();
-        int actualLinesPerPage = qMax(1, viewportHeight / lineHeight);
+        int actualLinesPerPage = qMax(1, viewportHeight / lineHeight)
+                                 * MinimapSettings::instance()->pixelsPerLine();
 
         int viewPortLineCount = qRound(m_factor * actualLinesPerPage);
         viewPortLineCount = qMax(1, qMin(viewPortLineCount, m_groove.height()));
@@ -634,7 +640,7 @@ bool MinimapStyle::drawMinimap(const QStyleOptionComplex *option,
     if (w <= 0 || h <= 0) {
         return false;
     }
-    QImage image(o->width(), h, QImage::Format_RGB32);
+    QImage image(o->width(), h * MinimapSettings::instance()->pixelsPerLine(), QImage::Format_RGB32);
     image.fill(baseBg);
     QTextDocument *doc = o->editor()->document();
     TextEditor::TextDocumentLayout *documentLayout = qobject_cast<TextEditor::TextDocumentLayout *>(
@@ -672,7 +678,7 @@ bool MinimapStyle::drawMinimap(const QStyleOptionComplex *option,
         }
         int x(0);
         bool cont(true);
-        QRgb *scanLine = reinterpret_cast<QRgb *>(image.scanLine(y));
+        QRgb *scanLine = reinterpret_cast<QRgb *>(image.scanLine(y * MinimapSettings::instance()->pixelsPerLine()));
         QVector<QTextLayout::FormatRange> formats = b.layout()->formats();
         std::sort(formats.begin(),
                   formats.end(),

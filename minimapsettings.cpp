@@ -50,6 +50,7 @@ const char lineCountThresholdKey[] = "LineCountThresHold";
 const char alphaKey[] = "Alpha";
 const char centerOnClickKey[] = "CenterOnClick";
 const char showLineTooltipKey[] = "ShowLineTooltip";
+const char pixelsPerLineKey[] = "PixelsPerLine";
 
 MinimapSettings *m_instance = 0;
 } // namespace
@@ -103,6 +104,13 @@ public:
             Tr::tr("Show line range tooltip when interacting with minimap"));
         m_showLineTooltip->setChecked(m_instance->m_showLineTooltip);
         form->addRow(Tr::tr("Show line tooltip:"), m_showLineTooltip);
+        m_pixelsPerLine = new QSpinBox;
+        m_pixelsPerLine->setMinimum(1);
+        m_pixelsPerLine->setMaximum(std::numeric_limits<int>::max());
+        m_pixelsPerLine->setToolTip(Tr::tr("Pixels per line"));
+        m_pixelsPerLine->setValue(m_instance->m_pixelsPerLine);
+        form->addRow(Tr::tr("Pixels per line:"), m_pixelsPerLine);
+
         groupBox->setLayout(form);
         setLayout(layout);
         setEnabled(!m_textWrapping);
@@ -137,6 +145,10 @@ public:
             m_instance->setShowLineTooltip(m_showLineTooltip->isChecked());
             save = true;
         }
+        if (m_pixelsPerLine->value() != MinimapSettings::pixelsPerLine()) {
+            m_instance->setPixelsPerLine(m_pixelsPerLine->value());
+            save = true;
+        }
         if (save) {
             Utils::storeToSettings(Utils::keyFromString(minimapPostFix),
                                    Core::ICore::settings(),
@@ -159,6 +171,7 @@ private:
     QSpinBox *m_alpha;
     QCheckBox *m_centerOnClick;
     QCheckBox *m_showLineTooltip;
+    QSpinBox *m_pixelsPerLine;
     bool m_textWrapping;
 };
 
@@ -182,6 +195,7 @@ MinimapSettings::MinimapSettings(QObject *parent)
     , m_alpha(Constants::MINIMAP_ALPHA_DEFAULT)
     , m_centerOnClick(Constants::MINIMAP_CENTER_ON_CLICK_DEFAULT)
     , m_showLineTooltip(Constants::MINIMAP_SHOW_LINE_TOOLTIP_DEFAULT)
+    , m_pixelsPerLine(Constants::MINIMAP_PIXELS_PER_LINE_DEFAULT)
 {
     QTC_ASSERT(!m_instance, return);
     m_instance = this;
@@ -208,6 +222,7 @@ Utils::Store MinimapSettings::toMap() const
     map.insert(alphaKey, m_alpha);
     map.insert(centerOnClickKey, m_centerOnClick);
     map.insert(showLineTooltipKey, m_showLineTooltip);
+    map.insert(pixelsPerLineKey, m_pixelsPerLine);
     return map;
 }
 
@@ -219,6 +234,7 @@ void MinimapSettings::fromMap(const Utils::Store &map)
     m_alpha = map.value(alphaKey, m_alpha).toInt();
     m_centerOnClick = map.value(centerOnClickKey, m_centerOnClick).toBool();
     m_showLineTooltip = map.value(showLineTooltipKey, m_showLineTooltip).toBool();
+    m_pixelsPerLine = map.value(pixelsPerLineKey, m_pixelsPerLine).toInt();
 }
 
 bool MinimapSettings::enabled()
@@ -249,6 +265,11 @@ bool MinimapSettings::centerOnClick()
 bool MinimapSettings::showLineTooltip()
 {
     return m_instance->m_showLineTooltip;
+}
+
+int MinimapSettings::pixelsPerLine()
+{
+    return m_instance->m_pixelsPerLine;
 }
 
 void MinimapSettings::setEnabled(bool enabled)
@@ -296,6 +317,14 @@ void MinimapSettings::setShowLineTooltip(bool showLineTooltip)
     if (m_showLineTooltip != showLineTooltip) {
         m_showLineTooltip = showLineTooltip;
         emit showLineTooltipChanged(showLineTooltip);
+    }
+}
+
+void MinimapSettings::setPixelsPerLine(int pixelsPerLine)
+{
+    if (m_pixelsPerLine != pixelsPerLine) {
+        m_pixelsPerLine = pixelsPerLine;
+        emit pixelsPerLineChanged(pixelsPerLine);
     }
 }
 } // namespace Internal

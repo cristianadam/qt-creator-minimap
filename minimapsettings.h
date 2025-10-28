@@ -46,6 +46,7 @@ public:
     static int alpha();
     static bool centerOnClick();
     static bool showLineTooltip();
+    static int pixelsPerLine();
 
 signals:
     void enabledChanged(bool);
@@ -54,6 +55,7 @@ signals:
     void alphaChanged(int);
     void centerOnClickChanged(bool);
     void showLineTooltipChanged(bool);
+    void pixelsPerLineChanged(int);
 
 private:
     friend class MinimapSettingsPageWidget;
@@ -64,6 +66,7 @@ private:
     void setAlpha(int alpha);
     void setCenterOnClick(bool centerOnClick);
     void setShowLineTooltip(bool showLineTooltip);
+    void setPixelsPerLine(int pixelsPerLine);
 
     bool m_enabled;
     int m_width;
@@ -71,6 +74,7 @@ private:
     int m_alpha;
     bool m_centerOnClick;
     bool m_showLineTooltip;
+    int m_pixelsPerLine;
     MinimapSettingsPage *m_settingsPage;
 };
 } // namespace Internal
