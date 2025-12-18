@@ -729,6 +729,9 @@ bool MinimapStyle::drawMinimap(const QStyleOptionComplex *option,
                 break;
             }
         }
+
+
+        int originalY = y;
         if (updateY) {
             ++y;
             if (revision == 1) {
@@ -744,6 +747,17 @@ bool MinimapStyle::drawMinimap(const QStyleOptionComplex *option,
             }
             folded = false;
             revision = 0;
+        }
+
+        // repeat the line on the next lines to give every line a height of
+        // (pixelsPerLine - 1), resulting in a 1px gap between lines
+        for (int duplicationLineY = 1;
+             duplicationLineY < MinimapSettings::instance()->pixelsPerLine() - 1;
+             ++duplicationLineY) {
+            QRgb *targetScanLine = reinterpret_cast<QRgb *>(image.scanLine(
+                originalY * MinimapSettings::instance()->pixelsPerLine() + duplicationLineY));
+
+            memcpy(targetScanLine, scanLine, image.bytesPerLine());
         }
     }
     painter->save();
