@@ -21,22 +21,17 @@
 #pragma once
 
 #include <QObject>
-
-#include <utils/store.h>
+#include <utils/aspects.h>
 
 namespace Minimap {
 namespace Internal {
-class MinimapSettingsPage;
 
-class MinimapSettings : public QObject
+class MinimapSettings : public Utils::AspectContainer
 {
     Q_OBJECT
 public:
-    explicit MinimapSettings(QObject *parent);
-    ~MinimapSettings();
-
-    Utils::Store toMap() const;
-    void fromMap(const Utils::Store &map);
+    explicit MinimapSettings(QObject *parent = nullptr);
+    ~MinimapSettings() override;
 
     static MinimapSettings *instance();
 
@@ -49,33 +44,25 @@ public:
     static int pixelsPerLine();
 
 signals:
-    void enabledChanged(bool);
-    void widthChanged(int);
-    void lineCountThresholdChanged(int);
-    void alphaChanged(int);
-    void centerOnClickChanged(bool);
-    void showLineTooltipChanged(bool);
-    void pixelsPerLineChanged(int);
+    void enabledChanged();
+    void widthChanged();
+    void lineCountThresholdChanged();
+    void alphaChanged();
+    void centerOnClickChanged();
+    void showLineTooltipChanged();
+    void pixelsPerLineChanged();
 
 private:
-    friend class MinimapSettingsPageWidget;
+    friend class MinimapSettingsPage;
 
-    void setEnabled(bool enabled);
-    void setWidth(int width);
-    void setLineCountThreshold(int lineCountThreshold);
-    void setAlpha(int alpha);
-    void setCenterOnClick(bool centerOnClick);
-    void setShowLineTooltip(bool showLineTooltip);
-    void setPixelsPerLine(int pixelsPerLine);
-
-    bool m_enabled;
-    int m_width;
-    int m_lineCountThreshold;
-    int m_alpha;
-    bool m_centerOnClick;
-    bool m_showLineTooltip;
-    int m_pixelsPerLine;
-    MinimapSettingsPage *m_settingsPage;
+    Utils::BoolAspect m_enabled{this};
+    Utils::IntegerAspect m_width{this};
+    Utils::IntegerAspect m_lineCountThreshold{this};
+    Utils::IntegerAspect m_alpha{this};
+    Utils::BoolAspect m_centerOnClick{this};
+    Utils::BoolAspect m_showLineTooltip{this};
+    Utils::IntegerAspect m_pixelsPerLine{this};
 };
+
 } // namespace Internal
 } // namespace Minimap
