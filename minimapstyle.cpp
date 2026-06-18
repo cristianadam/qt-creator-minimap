@@ -621,7 +621,7 @@ bool MinimapStyle::drawMinimap(const QStyleOptionComplex *option,
                                const QWidget *widget,
                                MinimapStyleObject *o) const
 {
-    if (TextEditor::TextEditorSettings::displaySettings().m_textWrapping) {
+    if (TextEditor::displaySettings().textWrapping()) {
         return false;
     }
     const QScrollBar *scrollbar = qobject_cast<const QScrollBar *>(widget);
