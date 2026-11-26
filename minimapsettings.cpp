@@ -27,7 +27,6 @@
 #include <extensionsystem/pluginmanager.h>
 #include <texteditor/displaysettings.h>
 #include <texteditor/texteditorconstants.h>
-#include <texteditor/texteditorsettings.h>
 #include <utils/layoutbuilder.h>
 #include <utils/qtcassert.h>
 #include <utils/store.h>

@@ -26,7 +26,6 @@
 #include <texteditor/textdocument.h>
 #include <texteditor/textdocumentlayout.h>
 #include <texteditor/texteditor.h>
-#include <texteditor/texteditorsettings.h>
 #include <utils/theme/theme.h>
 
 #include <algorithm>
@@ -395,7 +394,7 @@ private:
 
     void fontSettingsChanged()
     {
-        const TextEditor::FontSettings &settings = m_editor->textDocument()->fontSettings();
+        const TextEditor::FontSettingsData &settings = m_editor->textDocument()->fontSettings();
         m_backgroundColor = settings.formatFor(TextEditor::C_TEXT).background();
         if (!m_backgroundColor.isValid()) {
             m_backgroundColor = m_theme->color(Utils::Theme::BackgroundColorNormal);
